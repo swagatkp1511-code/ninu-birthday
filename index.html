@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>For Ninu — A Birthday Surprise</title>
+
+<!-- Google fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Handlee&family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ======================================================
+   THEME & LAYOUT - Midnight Galaxy + Rose-Gold accents
+   ====================================================== */
+
+:root{
+  --bg-dark: #03041a;
+  --bg-mid: #06102a;
+  --bg-soft: #0b1730;
+  --rose: #ffd7ec;
+  --rosegold: #ffb7d0;
+  --cyan: #7ef8ef;
+  --cyan-2:#39e6c0;
+  --glass: rgba(255,255,255,0.03);
+  --glass-2: rgba(255,255,255,0.02);
+  --text-soft: rgba(255,255,255,0.92);
+  --shadow-strong: rgba(0,0,0,0.6);
+}
+
+/* base */
+html,body{height:100%;margin:0;padding:0;background:radial-gradient(1200px 700px at 20% 6%, #071026 0%, var(--bg-mid) 20%, var(--bg-dark) 100%);font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial; color:var(--text-soft); -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow:hidden}
+
+/* container stage (moon/stars/balloons) */
+#stage{position:fixed;inset:0;z-index:1;pointer-events:none;}
+
+/* ======================================================
+   STARS — many small stars with gentle randomized twinkle
+   ====================================================== */
+#stars{position:absolute;inset:0;z-index:2;pointer-events:none}
+.star{position:absolute;border-radius:50%;background:#fff;box-shadow:0 0 8px rgba(255,255,255,0.9);opacity:0.8;transform:scale(1);transition:opacity 900ms linear}
+
+/* moon */
+#moon{
+  position:absolute; right:6%; top:8%;
+  width:160px; height:160px; border-radius:50%;
+  background:
+    radial-gradient(circle at 30% 30%, #fffaf0 0%, #efe6cf 28%, #d3c5a8 60%, #9f8e76 100%);
+  box-shadow: 0 0 80px rgba(255,240,210,0.06), inset -12px -8px 36px rgba(0,0,0,0.08);
+  z-index:3;
+  transition:transform 900ms ease, box-shadow 900ms ease, filter 900ms ease;
+  pointer-events:none;
+}
+#moon.glow{ box-shadow: 0 0 200px rgba(255,230,200,0.16); transform:scale(1.03) }
+
+/* subtle overlay */
+.skyGlow{ position:absolute; inset:0; z-index:4; pointer-events:none; background: linear-gradient(180deg, rgba(8,18,40,0.06), rgba(0,0,0,0)); }
+
+/* ======================================================
+   PASSWORD CARD (visible on top of the stage)
+   ====================================================== */
+#pw-screen{
+  position:fixed; inset:0; z-index:120; display:flex; align-items:center; justify-content:center; pointer-events:auto;
+}
+.card{
+  width:420px; max-width:94%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:16px; padding:22px; text-align:center;
+  border:1px solid rgba(255,255,255,0.04); box-shadow: 0 18px 60px var(--shadow-strong);
+  backdrop-filter: blur(8px);
+}
+.card .title {font-size:26px;margin-bottom:6px}
+.card h2{ margin:6px 0 8px; font-size:18px; letter-spacing:0.4px; color:var(--rose) }
+.card input[type="password"], .card input[type="text"]{
+  width:86%; padding:12px 14px; border-radius:10px; border:none; outline:none; text-align:center;
+  background: rgba(255,255,255,0.02); color:var(--text-soft); font-size:1rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+}
+.pw-row{display:flex;align-items:center;justify-content:center;gap:8px; margin-top:8px}
+.eyeBtn{ background:transparent; border:none; cursor:pointer; color:white; opacity:0.9; font-size:16px }
+.card .btn { margin-top:12px; padding:11px 20px; border-radius:999px; border:none; cursor:pointer; font-weight:800; color:#021; background: linear-gradient(90deg,var(--cyan),var(--cyan-2)); box-shadow: 0 10px 30px rgba(42,214,177,0.08); }
+.card .tip { margin-top:10px; color:rgba(255,230,235,0.75); font-size:0.92rem; }
+.small-hint { margin-top:8px; color:rgba(255,255,255,0.35); font-size:0.85rem; }
+
+/* wrong text area */
+#warnMsg { margin-top:10px; color:#ff8696; font-weight:600; min-height:20px; }
+
+/* shake animation for input/card */
+@keyframes smallShake { 0%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} 100%{transform:translateX(0)} }
+
+/* ======================================================
+   BALLOONS (DOM) — realistic shape, shine, string, shadows
+   ====================================================== */
+#balloonsWrap{ position:fixed; inset:0; z-index:30; pointer-events:none }
+.balloon{
+  position:absolute; width:120px; height:150px; border-radius:50% 50% 46% 46% / 60% 60% 40% 40%;
+  display:flex; align-items:center; justify-content:center; font-weight:800; color:white;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.45), 0 0 22px rgba(255,255,255,0.03) inset;
+  transform-origin:center bottom; pointer-events:auto; user-select:none;
+  transition: transform 320ms ease, opacity 300ms ease;
+}
+.balloon .shine { position:absolute; left:16%; top:12%; width:42%; height:42%; border-radius:50%; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.06)); opacity:0.18; mix-blend-mode:screen; pointer-events:none; }
+.balloon .string { position:absolute; left:50%; top:92%; width:2px; height:84px; background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); transform:translateX(-50%); border-radius:2px; }
+
+/* color palette — richer/darker */
+.b-rose{ background: linear-gradient(180deg,#d36c92,#b93a6b) }
+.b-gold{ background: linear-gradient(180deg,#e6b26b,#c87b32); color:#2b1400; }
+.b-cyan{ background: linear-gradient(180deg,#68f5e8,#2acfac); color:#033; }
+.b-purple{ background: linear-gradient(180deg,#b58bff,#7c3ef1) }
+
+/* balloon gentle wobble */
+@keyframes sway { 0%{transform: translateY(0) rotate(-2deg)} 50%{transform: translateY(-8px) rotate(2deg)} 100%{transform: translateY(0) rotate(-1deg)} }
+
+/* ======================================================
+   MESSAGE BOX (rose-gold) and HAPPY TITLE (handwritten)
+   ====================================================== */
+#messageBox{
+  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:40;
+  display:none; pointer-events:none; text-align:center; max-width:880px;
+  background: linear-gradient(180deg, rgba(255,242,238,0.04), rgba(255,248,242,0.01));
+  border-radius:12px; padding:18px 22px; border:1px solid rgba(255,210,205,0.06);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+}
+#messageBox p{ color: var(--rosegold); font-size: clamp(0.95rem, 3.2vw, 1.15rem); line-height:1.6; margin:0; font-weight:700; text-shadow: 0 8px 30px rgba(255,140,160,0.06) }
+
+#happyTitle {
+  position: fixed;
+  left: 50%;
+  top: 62%;
+  transform: translate(-50%, -50%);
+  z-index: 200;
+  font-family: 'Pacifico', cursive;
+  font-size: clamp(1.4rem, 6vw, 3.2rem);
+  color: #7fffd4; /* Aqua-cyan base */
+  text-shadow:
+        0 0 12px rgba(127, 255, 212, 0.7),
+        0 0 22px rgba(127, 255, 212, 0.55),
+        0 0 42px rgba(127, 255, 212, 0.4),
+        0 0 60px rgba(127, 255, 212, 0.25);
+  display: none;
+  white-space: nowrap;  /* Ensures horizontal text */
+}
+
+.heartbeat{ animation: heartbeat 2.6s infinite cubic-bezier(.2,.7,.2,1); }
+@keyframes heartbeat{ 0%,100%{transform:translate(-50%,-50%) scale(1)} 30%{transform:translate(-50%,-50%) scale(1.12)} 60%{transform:translate(-50%,-50%) scale(0.98)} }
+
+/* ======================================================
+   CAKE (center modal) — 5 candles (we will hide which ones on blow)
+   ====================================================== */
+#cakeModal{
+  position:fixed; inset:0; display:none; z-index:50; align-items:center; justify-content:center; pointer-events:auto;
+}
+.cakeWrap{ width:min(86vw,520px); max-width:520px; display:flex; flex-direction:column; align-items:center; gap:18px; }
+.cakeGraphic{ position:relative; width:66%; aspect-ratio: 1.4/1; min-width:220px; max-width:420px; }
+.cakeLayer{ position:absolute; left:50%; transform:translateX(-50%); border-radius:12px; }
+.layer1{ bottom:6%; width:78%; height:30%; background:linear-gradient(180deg,#ffe8f2,#ffd5e9); box-shadow:0 8px 26px rgba(0,0,0,0.25); border:1px solid rgba(255,190,210,0.12) }
+.layer2{ bottom:36%; width:62%; height:26%; background:linear-gradient(180deg,#ffdff0,#ffc9e6); border:1px solid rgba(255,190,210,0.10) }
+.layer3{ bottom:62%; width:46%; height:20%; background:linear-gradient(180deg,#fff1f8,#ffdbeF); border:1px solid rgba(255,200,220,0.08) }
+
+/* candle container */
+.candleRow{ position:absolute; left:50%; transform:translateX(-50%); bottom:78%; width:64%; display:flex; justify-content:space-between; pointer-events:auto; gap:6px }
+.candleEl{ width:8px; height:36px; border-radius:4px; background:linear-gradient(180deg,#fff2e6,#ffd6c7); position:relative; display:flex; align-items:flex-start; justify-content:center }
+.flame{ position:absolute; top:-16px; left:50%; transform:translateX(-50%); width:12px; height:18px; border-radius:50%; background: radial-gradient(circle,#fff59a,#ffb76a,#ff7a3b); box-shadow:0 6px 18px rgba(255,120,80,0.22); animation:flicker 900ms infinite ease-in-out }
+@keyframes flicker{ 0%{transform:translateX(-50%) scale(1)} 50%{transform:translateX(-50%) scale(1.08)} 100%{transform:translateX(-50%) scale(0.96) }
+}
+.flame.off{ display:none }
+.smoke{ position:absolute; top:-22px; left:50%; transform:translateX(-50%); width:8px; height:22px; border-radius:10px; background: radial-gradient(circle, rgba(255,255,255,0.75), rgba(120,120,120,0)); opacity:0 }
+
+/* cake controls */
+.cakeControls{ display:flex; gap:10px; margin-top:6px }
+.cakeBtn{ padding:10px 18px; border-radius:999px; border:none; cursor:pointer; font-weight:800; background:linear-gradient(90deg,#ff9ccf,#ff5ca8); color:#021; box-shadow:0 10px 30px rgba(255,80,150,0.08) }
+
+/* ======================================================
+   CONFETTI CANVAS (high-perf) & fallback DOM pieces
+   ====================================================== */
+#confettiCanvas{ position:fixed; inset:0; pointer-events:none; z-index:240 }
+.domConfetti{ position:fixed; width:10px; height:12px; border-radius:2px; z-index:241; pointer-events:none }
+
+/* ======================================================
+   SMALL UI / RESPONSIVE
+   ====================================================== */
+@media (max-width:600px){
+  .card{ width:92%; padding:18px }
+  #moon{ right:4%; top:4%; width:110px; height:110px }
+  #happyTitle{ font-size: clamp(2.2rem,10vw,3.8rem); top:62% }
+  .balloon{ width:86px; height:110px }
+  .cakeGraphic{ width:86vw; max-width:360px }
+}
+</style>
+</head>
+<body>
+
+<!-- ======================================================
+     STAGE: stars, moon, sky overlay, balloons wrapper
+     ====================================================== -->
+<div id="stage" aria-hidden="false">
+  <div id="stars" aria-hidden="true"></div>
+  <div id="moon" aria-hidden="true" ></div>
+  <div class="skyGlow" aria-hidden="true"></div>
+  <div id="balloonsWrap" aria-hidden="true"></div>
+</div>
+
+<!-- ======================================================
+     PASSWORD SCREEN (CENTER) -- visible on top of stage
+     ====================================================== -->
+<div id="pw-screen" aria-hidden="false">
+  <div class="card" role="dialog" aria-label="Password card">
+    <div class="title">🔒 Private Surprise</div>
+    <h2>Enter the secret password</h2>
+
+    <div class="pw-row">
+      <input id="pwInput" type="password" placeholder="Type the secret password..." aria-label="password input" autocomplete="off" />
+      <button class="eyeBtn" id="toggleShow" aria-label="show password" title="Show / hide">👁</button>
+    </div>
+
+    <div style="display:flex;justify-content:center"><button class="btn" id="unlockBtn">Unlock</button></div>
+    <div id="warnMsg" aria-live="polite"></div>
+    <p class="tip">TIP : The password is very special — type it carefully ✨</p>
+    <div class="small-hint">If you enter the right password, a special surprise will happen ✨</div>
+  </div>
+</div>
+
+<!-- ======================================================
+     CAKE MODAL (hidden until password correct)
+     ====================================================== -->
+<div id="cakeModal" aria-hidden="true">
+  <div class="cakeWrap" role="dialog" aria-label="Blow the candles">
+    <div class="cakeGraphic" id="cakeGraphic">
+      <div class="candleRow" id="candleRow">
+        <!-- JS will inject 5 candleEl elements here -->
+      </div>
+      <div class="layer3 cakeLayer"></div>
+      <div class="layer2 cakeLayer"></div>
+      <div class="layer1 cakeLayer"></div>
+    </div>
+
+    <div class="cakeControls" id="cakeControls">
+      <button class="cakeBtn" id="blowBtn1">BLOW 🎂</button>
+      <!-- second button will be injected by JS after first blow -->
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================
+     MESSAGE BOX & HAPPY TITLE
+     ====================================================== -->
+<div id="messageBox" aria-hidden="true"><p id="messageText"></p></div>
+<div id="happyTitle" aria-hidden="true">🎆🎈HAPPY BIRTHDAY MY DEAR NINU🎈🎆</div>
+
+<!-- confetti canvas -->
+<canvas id="confettiCanvas" aria-hidden="true"></canvas>
+
+<script>
+/* ======================================================
+   CONFIG (easy to change)
+   ====================================================== */
+const CONFIG = {
+  FIRST_PASS: "NINUDI-KUMBHUDI",
+  BALLOON_COUNT: 8,                // 6-9 is safe; 8 chosen for smoothness
+  MESSAGE_TEXT: `Very lucky to have you in my life dear ninu, sorry for all my past mistakes.\nYou were the best, You are the best and You are going to be the best foreverrrrr!!!!`,
+  MESSAGE_STAY_MS: 3500,
+  INITIAL_CONFETTI: 90,
+  FINAL_CONFETTI_PER_CORNER: 70,
+  MOBILE_OPTIMIZE: true
+};
+
+/* ======================================================
+   UTILS
+   ====================================================== */
+const rand = (a,b)=> Math.random()*(b-a)+a;
+const rInt = (a,b)=> Math.floor(rand(a,b));
+const $ = id => document.getElementById(id);
+
+/* ======================================================
+   ELEMENTS
+   ====================================================== */
+const pwScreen = $('pw-screen');
+const pwInput = $('pwInput');
+const unlockBtn = $('unlockBtn');
+const warnMsg = $('warnMsg');
+const toggleShow = $('toggleShow');
+
+const cakeModal = $('cakeModal');
+const candleRow = $('candleRow');
+const cakeControls = $('cakeControls');
+const blowBtn1 = $('blowBtn1');
+
+const balloonsWrap = $('balloonsWrap');
+const messageBox = $('messageBox');
+const messageText = $('messageText');
+const happyTitle = $('happyTitle');
+
+const confettiCanvas = $('confettiCanvas');
+const ctx = confettiCanvas.getContext && confettiCanvas.getContext('2d');
+
+/* ======================================================
+   RESIZE / CANVAS SETUP
+   ====================================================== */
+let W = innerWidth, H = innerHeight;
+function resizeAll(){
+  W = innerWidth; H = innerHeight;
+  confettiCanvas.width = W; confettiCanvas.height = H;
+}
+addEventListener('resize', resizeAll);
+resizeAll();
+
+/* ======================================================
+   STARS CREATION (mobile-first friendly)
+   ====================================================== */
+(function createStars(){
+  const container = $('stars');
+  const n = Math.min(140, Math.max(80, Math.round((W*H)/80000))); // adjust by viewport size
+  for(let i=0;i<n;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = rand(0.6,2.2);
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.left = rand(1,99) + 'vw';
+    s.style.top = rand(1,99) + 'vh';
+    s.style.opacity = 0.15 + Math.random()*0.85;
+    container.appendChild(s);
+    // twinkle loop
+    (function(el){
+      setTimeout(function loop(){
+        el.style.opacity = 0.25 + Math.random()*0.85;
+        setTimeout(loop, rInt(900,4200));
+      }, rInt(120,1200));
+    })(s);
+  }
+})();
+
+/* ======================================================
+   TOGGLE SHOW PASSWORD
+   ====================================================== */
+toggleShow.addEventListener('click', ()=>{
+  if(pwInput.type === 'password'){ pwInput.type = 'text'; toggleShow.innerText = '🙈'; }
+  else { pwInput.type = 'password'; toggleShow.innerText = '👁'; }
+});
+
+/* ======================================================
+   PASSWORD CHECK & WRONG SHAKE
+   ====================================================== */
+unlockBtn.addEventListener('click', checkPassword);
+pwInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') checkPassword(); });
+
+function showWrong(msg){
+  warnMsg.innerText = msg || 'Wrong password — try again, be careful this time!';
+  // shake the card
+  const card = document.querySelector('.card');
+  card.style.animation = 'smallShake 0.42s';
+  setTimeout(()=> card.style.animation = '', 440);
+}
+
+function checkPassword(){
+  const v = (pwInput.value || '').trim();
+  if(v === CONFIG.FIRST_PASS){
+    // correct: hide pw-screen smoothly
+    pwScreen.style.transition = 'opacity 420ms ease';
+    pwScreen.style.opacity = 0;
+    setTimeout(()=> pwScreen.style.display = 'none', 420);
+    // show cake modal
+    setTimeout(()=> openCakeModal(), 350);
+    // subtle background transition & moon glow (will be stronger later)
+    setTimeout(()=> {
+      document.body.style.transition = 'background 1400ms ease';
+      document.body.style.background = 'radial-gradient(circle at 50% 20%, #081128, #0b1830 20%, #040617 100%)';
+      $('moon').classList.add('glow');
+      // brighten stars slightly
+      document.querySelectorAll('.star').forEach(s => { s.style.opacity = Math.min(1, (parseFloat(s.style.opacity)||0.5) + 0.22); });
+    }, 200);
+  } else {
+    showWrong();
+  }
+}
+
+/* ======================================================
+   CAKE + CANDLES SETUP
+   ====================================================== */
+let candleCount = 5;  // config: 5 candles
+let candleEls = [];   // store references
+function buildCakeCandles(){
+  candleRow.innerHTML = ''; candleEls = [];
+  for(let i=0;i<candleCount;i++){
+    const c = document.createElement('div');
+    c.className = 'candleEl';
+    // inner flame + smoke
+    const flame = document.createElement('div');
+    flame.className = 'flame';
+    flame.dataset.on = '1';
+    c.appendChild(flame);
+    const smoke = document.createElement('div'); smoke.className = 'smoke';
+    c.appendChild(smoke);
+    candleRow.appendChild(c);
+    candleEls.push({root:c,flame:flame,smoke:smoke});
+  }
+}
+buildCakeCandles();
+
+/* open cake modal */
+function openCakeModal(){
+  cakeModal.style.display = 'flex';
+  cakeModal.style.opacity = 0;
+  cakeModal.style.transition = 'opacity 420ms ease';
+  setTimeout(()=> cakeModal.style.opacity = 1, 40);
+  // ensure first blow button is visible
+  const b1 = $('blowBtn1');
+  if(b1) b1.style.display = 'inline-block';
+}
+
+/* blow logic:
+   - first blow: extinguish 2 flames (random different ones)
+   - second blow: extinguish remaining
+*/
+function extinguishFlames(n){
+  let remaining = candleEls.filter(c => c.flame && c.flame.dataset.on === '1');
+  for(let i=0;i<n && remaining.length>0;i++){
+    // choose random
+    const idx = rInt(0, remaining.length);
+    const obj = remaining[idx];
+    if(!obj) break;
+    obj.flame.dataset.on = '0';
+    // animate flame fade
+    obj.flame.style.transition = 'opacity 360ms ease';
+    obj.flame.style.opacity = 0;
+    // show smoke
+    obj.smoke.classList.add('show');
+    obj.smoke.style.animation = 'smokeUp 1200ms ease-out forwards';
+    // remove from remaining array
+    remaining.splice(idx,1);
+  }
+}
+
+/* attach blow handlers */
+$('blowBtn1').addEventListener('click', function(){
+  // extinguish two
+  extinguishFlames(2);
+  // remove this button and show secondary
+  this.style.display = 'none';
+  // create second button
+  const b2 = document.createElement('button');
+  b2.className = 'cakeBtn';
+  b2.id = 'blowBtn2';
+  b2.innerText = 'BLOW HARDERRR!';
+  cakeControls.appendChild(b2);
+  b2.addEventListener('click', function(){
+    extinguishFlames(3); // remaining 3 go out
+    // little cake jiggle & fade
+    cakeModal.style.transition = 'opacity 700ms ease';
+    cakeModal.style.opacity = 0;
+    setTimeout(()=> { cakeModal.style.display = 'none'; startMainSequence(); }, 720);
+  });
+});
+
+/* smoke animation keyframe added via JS dynamically for compatibility */
+(function addSmokeKeyframe(){
+  const style = document.createElement('style');
+  style.innerHTML = `
+    @keyframes smokeUp { 0%{ transform:translateY(0) scale(1); opacity:0.6 } 100%{ transform:translateY(-40px) scale(1.4); opacity:0 } }
+    .smoke.show{ opacity:1 }
+  `;
+  document.head.appendChild(style);
+})();
+
+/* ======================================================
+   CONFETTI (canvas particles) - optimized
+   ====================================================== */
+let particles = [];
+let confettiAnim = null;
+function spawnConfetti(x,y,count,spreadUp=true){
+  for(let i=0;i<count;i++){
+    particles.push({
+      x: x + rand(-20,20),
+      y: y + rand(-10,10),
+      vx: rand(-6,6),
+      vy: rand(-7,-2) + (spreadUp? -rand(2,6):0),
+      size: rand(6,12),
+      rot: rand(0,Math.PI*2),
+      drot: rand(-0.12,0.12),
+      hue: rInt(0,360),
+      life: 0,
+      ttl: rInt(60,140)
+    });
+  }
+  if(!confettiAnim) runConfetti();
+}
+function runConfetti(){
+  confettiAnim = requestAnimationFrame(function step(){
+    if(!ctx) return; // safety
+    ctx.clearRect(0,0,W,H);
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.life++;
+      p.vy += 0.14; // gravity
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.drot;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = `hsl(${p.hue} 80% 55%)`;
+      ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
+      ctx.restore();
+      if(p.y > H + 80 || p.life > p.ttl) particles.splice(i,1);
+    }
+    if(particles.length>0) confettiAnim = requestAnimationFrame(step);
+    else { cancelAnimationFrame(confettiAnim); confettiAnim = null; ctx.clearRect(0,0,W,H); }
+  });
+}
+
+/* helper for small dom confetti (mini) */
+function miniDomConfetti(x,y,amount=16){
+  for(let i=0;i<amount;i++){
+    const d = document.createElement('div');
+    d.className = 'domConfetti';
+    d.style.left = x + 'px';
+    d.style.top = y + 'px';
+    d.style.background = `hsl(${rInt(0,360)} 80% 55%)`;
+    document.body.appendChild(d);
+    const dx = rand(-140,140);
+    const dy = -rand(80,260);
+    d.animate([{ transform:'translate(0,0)', opacity:1 }, { transform:`translate(${dx}px, ${dy}px)`, opacity:0 }], { duration: 900+rand(0,500), easing:'cubic-bezier(.2,.7,.2,1)' });
+    setTimeout(()=> d.remove(), 1200);
+  }
+}
+
+/* ======================================================
+   BALLOONS SPAWN & BEHAVIOR
+   ====================================================== */
+function spawnBalloons(count){
+  // clear previous
+  while(balloonsWrap.firstChild) balloonsWrap.removeChild(balloonsWrap.firstChild);
+  // clamp for device
+  const clamp = Math.max(6, Math.min(12, count));
+  for(let i=0;i<clamp;i++){
+    const b = document.createElement('div');
+    const colors = ['b-rose','b-gold','b-cyan','b-purple'];
+    b.className = 'balloon '+ colors[i % colors.length];
+    b.innerHTML = `<div class="shine"></div><div class="string"></div>`;
+    // start positions (responsive)
+    const left = 6 + i*(84/clamp) + rand(-4,6);
+    const startTop = 78 + rand(0,10);
+    b.style.left = left + 'vw';
+    b.style.top = startTop + 'vh';
+    b.style.zIndex = 30 + i;
+    // small scale variation
+    b.style.transform = `scale(${0.86 + rand(0,0.28)})`;
+    // attach popup click
+    b.addEventListener('click', ()=> popBalloon(b));
+    balloonsWrap.appendChild(b);
+    // gentle float up after delay
+    const liftDelay = 800 + i*130 + rand(0,600);
+    const liftDur = 3800 + rand(800,1600);
+    setTimeout(()=> {
+      b.style.transition = `top ${liftDur}ms cubic-bezier(.2,.78,.18,1), transform 600ms`;
+      const newTop = Math.max(6, startTop - rand(60,86));
+      b.style.top = newTop + 'vh';
+      // optional auto-pop
+      setTimeout(()=> {
+        if(b && b.parentNode) popBalloon(b);
+      }, liftDur + 160);
+    }, liftDelay);
+  }
+}
+
+/* balloon pop */
+function popBalloon(b){
+  if(!b || b.dataset.popped) return;
+  b.dataset.popped = '1';
+  // get center for confetti
+  const rect = b.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  // shrink + vanish
+  b.style.transform += ' scale(0.18) rotate('+ rInt(-180,180) +'deg)';
+  b.style.opacity = 0;
+  // shards & mini confetti
+  miniDomConfetti(cx, cy, 14);
+  spawnConfetti(cx, cy, 28, true);
+  setTimeout(()=> { try{ if(b.parentNode) b.remove(); }catch(e){} }, 700);
+}
+
+/* ======================================================
+   SEQUENCE: message show -> happy title -> corner confetti
+   ====================================================== */
+function showMessageSequence() {
+  messageText.innerText = CONFIG.MESSAGE_TEXT;
+  messageBox.style.display = "block";
+  messageBox.style.opacity = 0;
+
+  messageBox.style.transition = "opacity 1s ease, transform 1s ease";
+  messageBox.style.transform = "translate(-50%, -40%)";
+
+  setTimeout(() => {
+    messageBox.style.opacity = 1;
+    messageBox.style.transform = "translate(-50%, -50%)";
+  }, 50);
+
+  setTimeout(() => {
+    messageBox.style.opacity = 0;
+    messageBox.style.transform = "translate(-50%, -60%)";
+
+    setTimeout(() => {
+      messageBox.style.display = "none";
+      revealTitle();
+    }, 900);
+  }, CONFIG.MESSAGE_STAY_MS);
+}
+
+
+function revealTitle(){
+  // center the happy title
+  happyTitle.style.display = 'block';
+  happyTitle.style.opacity = 0;
+  happyTitle.animate([{opacity:0, transform: 'translate(-50%,-50%) scale(.9)'},{opacity:1, transform:'translate(-50%,-50%) scale(1)'}], { duration:3000, easing:'cubic-bezier(.2,.7,.2,1)'});
+  setTimeout(()=> happyTitle.classList.add('heartbeat'), 400);
+  // corner confetti after small delay
+  setTimeout(()=> { spawnConfetti(40, H-40, CONFIG.FINAL_CONFETTI_PER_CORNER, true); spawnConfetti(W-40, H-40, CONFIG.FINAL_CONFETTI_PER_CORNER, true); }, 800);
+}
+
+/* ======================================================
+   ENTRY: after cake all out -> start main show
+   ====================================================== */
+function startMainSequence(){
+  // small background brightening
+  document.body.style.transition = 'background 900ms ease';
+  document.body.style.background = 'radial-gradient(circle at 50% 18%, #0a1630 0%, #051028 40%, #001017 100%)';
+  // moon stronger glow
+  $('moon').classList.add('glow');
+  // initial center confetti + spawn balloons
+  setTimeout(()=> { spawnConfetti(W/2, H/2 - 60, CONFIG.INITIAL_CONFETTI, true); }, 360);
+  setTimeout(()=> spawnBalloons(CONFIG.BALLOON_COUNT), 540);
+  // show message after balloons start (timing tuned)
+  setTimeout(()=> showMessageSequence(), 1600 + CONFIG.BALLOON_COUNT * 120);
+}
+
+/* ======================================================
+   SMALL SAFETY: if few balloons popped or slow, reveal anyway
+   ====================================================== */
+let safetyTimeout = null;
+function setSafetyReveal(){
+  clearTimeout(safetyTimeout);
+  safetyTimeout = setTimeout(()=> {
+    // if happy title not shown, just show message sequence
+    if(happyTitle.style.display !== 'block') showMessageSequence();
+  }, 20000);
+}
+
+/* ======================================================
+   START: called after second-blow finishes
+   ====================================================== */
+function startMainSequenceEntry(){
+  // show stage is already visible; start main sequence
+  startMainSequence();
+  setSafetyReveal();
+}
+
+/* ======================================================
+   INITIAL HOOKS
+   ====================================================== */
+/* create candle elements (5) inside candleRow */
+(function initCandles(){
+  candleRow.innerHTML = '';
+  for(let i=0;i<5;i++){
+    const el = document.createElement('div'); el.className = 'candleEl';
+    const flame = document.createElement('div'); flame.className = 'flame';
+    flame.dataset.on = '1';
+    const smoke = document.createElement('div'); smoke.className = 'smoke';
+    el.appendChild(flame); el.appendChild(smoke);
+    candleRow.appendChild(el);
+  }
+})();
+
+/* attach blow button handlers (first blow & second blow via dynamic insertion) */
+$('blowBtn1').addEventListener('click', function(){
+  // first blow: 2 candles out
+  extinguishFlames(2);
+  // hide this button, show second
+  this.style.display = 'none';
+  const b2 = document.createElement('button'); b2.className = 'cakeBtn'; b2.id = 'blowBtn2'; b2.innerText = 'BLOW HARDERRR!';
+  cakeControls.appendChild(b2);
+  b2.addEventListener('click', function(){
+    extinguishFlames(3); // remaining three out
+    // small cake fade
+    cakeModal.style.transition = 'opacity 700ms ease';
+    cakeModal.style.opacity = 0;
+    setTimeout(()=> { cakeModal.style.display = 'none'; startMainSequenceEntry(); }, 720);
+  });
+});
+
+/* small helper to extinguish n flames */
+function extinguishFlames(n){
+  const flames = candleRow.querySelectorAll('.flame');
+  let count = 0;
+  for(let i=0;i<flames.length && count<n;i++){
+    const f = flames[i];
+    if(f.dataset.on === '1'){ f.dataset.on = '0'; f.style.transition = 'opacity 360ms ease'; f.style.opacity = 0; const sm = f.nextSibling; if(sm) { sm.classList.add('show'); sm.style.animation = 'smokeUp 1200ms ease-out forwards'; } count++; }
+  }
+}
+
+/* ======================================================
+   Hook: when user enters correct pw we open cake modal
+   (we already defined checkPassword). To show cake modal we use:)
+   ====================================================== */
+function openCakeModal(){
+  // show cakeModal
+  cakeModal.style.display = 'flex';
+  cakeModal.style.opacity = 0;
+  setTimeout(()=> cakeModal.style.opacity = 1, 40);
+  // ensure candles visible (reset flames)
+  const flames = candleRow.querySelectorAll('.flame');
+  flames.forEach(f => { f.style.opacity = 1; f.dataset.on = '1'; if(f.nextSibling) f.nextSibling.classList.remove('show'); });
+  // ensure no extra blow button exists
+  const b2 = $('blowBtn2'); if(b2) b2.remove();
+}
+
+/* ======================================================
+   Small polish: clicking the stage removes the pwScreen (for dev)
+   but we won't add that — keep it secure
+   ====================================================== */
+
+/* ======================================================
+   Keyboard shortcut for debugging (optional) - DO NOT USE for release
+   Uncomment if you need quick testing:
+   ====================================================== */
+// window.addEventListener('keydown',(e)=>{ if(e.key === 't') { startMainSequenceEntry(); } });
+
+/* ======================================================
+   finalize: expose a tiny helper to change password easily in console
+   (window.CHANGE_PASS = (s)=> CONFIG.FIRST_PASS = s;)
+   ====================================================== */
+window.CHANGE_PASS = (s)=> { CONFIG.FIRST_PASS = String(s); console.log('Password changed to', CONFIG.FIRST_PASS); };
+
+/* ======================================================
+   Done initial setup
+   ====================================================== */
+</script>
+</body>
+</html>
