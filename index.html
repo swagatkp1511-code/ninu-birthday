@@ -248,6 +248,8 @@ html,body{height:100%;margin:0;padding:0;background:radial-gradient(1200px 700px
 
 <!-- confetti canvas -->
 <canvas id="confettiCanvas" aria-hidden="true"></canvas>
+   <audio id="bgSong" src="ninusong.mp3" preload="auto"></audio>
+
 
 <script>
 /* ======================================================
@@ -354,6 +356,14 @@ function showWrong(msg){
 function checkPassword(){
   const v = (pwInput.value || '').trim();
   if(v === CONFIG.FIRST_PASS){
+    // PLAY SONG
+const bg = document.getElementById("bgSong");
+if(bg){
+    bg.currentTime = 0;
+    bg.volume = 0.7; // adjust loudness
+    bg.play().catch(()=>{ console.log("Autoplay blocked"); });
+}
+
     // correct: hide pw-screen smoothly
     pwScreen.style.transition = 'opacity 420ms ease';
     pwScreen.style.opacity = 0;
@@ -734,5 +744,7 @@ window.CHANGE_PASS = (s)=> { CONFIG.FIRST_PASS = String(s); console.log('Passwor
    Done initial setup
    ====================================================== */
 </script>
+<audio id="bgSong" src="ninusong.mp3"></audio>
+
 </body>
 </html>
